@@ -6,7 +6,8 @@ import java.sql.*;
 
 public class UserDao {
 
-    private ConnectionMaker connectionMaker;
+    private final ConnectionMaker connectionMaker;
+
 
     public UserDao(ConnectionMaker connectionMaker){
 
