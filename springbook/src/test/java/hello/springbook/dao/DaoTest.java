@@ -1,4 +1,4 @@
-package hello.springbook;
+package hello.springbook.dao;
 
 import hello.springbook.user.dao.DaoFactory;
 import hello.springbook.user.dao.UserDao;
