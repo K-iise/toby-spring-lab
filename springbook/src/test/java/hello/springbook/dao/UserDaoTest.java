@@ -1,21 +1,23 @@
-package hello.springbook.user.dao;
+package hello.springbook.dao;
 
+import hello.springbook.user.dao.UserDao;
 import hello.springbook.user.domain.User;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.context.support.GenericXmlApplicationContext;
 
 import java.sql.SQLException;
 
 public class UserDaoTest {
-    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+    @Test
+    public void addAndGet() throws SQLException, ClassNotFoundException {
         //AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
         ApplicationContext context = new GenericXmlApplicationContext("applicationContext.xml");
         UserDao dao = context.getBean("userDao", UserDao.class);
 
         User user = new User();
-        user.setId("whiteship3");
+        user.setId("user2");
         user.setName("백기선");
         user.setPassword("married");
 
@@ -27,8 +29,7 @@ public class UserDaoTest {
         System.out.println(user2.getName());
         System.out.println(user2.getPassword());
 
-        System.out.println(user2.getId() + " 조회 성공");
-
-
+        Assertions.assertThat(user.getName()).isEqualTo(user2.getName());
+        Assertions.assertThat(user.getPassword()).isEqualTo(user2.getPassword());
     }
 }
