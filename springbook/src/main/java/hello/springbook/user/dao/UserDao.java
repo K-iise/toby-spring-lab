@@ -11,13 +11,17 @@ public class UserDao {
     private DataSource dataSource;
 
     public void setDataSource(DataSource dataSource) {
+        this.jdbcContext = new JdbcContext();
+        this.jdbcContext.setDataSource(dataSource);
         this.dataSource = dataSource;
     }
+
+    private JdbcContext jdbcContext;
 
     public void add(final User user) throws SQLException {
 
         // 익명 내부 클래스를 적용.
-        StatementStrategy st = new StatementStrategy() {
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
                 PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
@@ -27,8 +31,7 @@ public class UserDao {
 
                 return ps;
             }
-        };
-        jdbcContextWithStatementStrategy(st);
+        });
     }
 
     public User get(String id) throws SQLException {
@@ -62,8 +65,12 @@ public class UserDao {
 
     // 전략 패턴의 클라이언트(Client).
     public void deleteAll() throws SQLException{
-        StatementStrategy st = new DeleteAllStatement(); // 전략 생성(DeleteAllStatement)
-        jdbcContextWithStatementStrategy(st); // 컨텍스트(jdbcContextWithStatementStrategy)에 전략 주입
+        this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
+            @Override
+            public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+                return c.prepareStatement("delete from users");
+            }
+        });
     }
 
     public int getCount() throws SQLException{
