@@ -14,20 +14,38 @@ public class UserDao {
         this.dataSource = dataSource;
     }
 
-    public void add(User user) throws SQLException {
-        Connection c = dataSource.getConnection();
+    public void add(User user) throws SQLException{
+        Connection c = null;
+        PreparedStatement ps = null;
+        try {
+            c = dataSource.getConnection();
 
-        PreparedStatement ps = c.prepareStatement(
-                "insert into users(id, name, password) values (?, ?, ?)"
-        );
-        ps.setString(1, user.getId());
-        ps.setString(2, user.getName());
-        ps.setString(3, user.getPassword());
+            ps = c.prepareStatement("insert into users(id, name, password) values(?,?,?)");
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getName());
+            ps.setString(3, user.getPassword());
 
-        ps.executeUpdate();
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null){
+                try {
+                    ps.close();
+                }
+                catch (SQLException e){
+                }
+            }
 
-        ps.close();
-        c.close();
+            if (c != null){
+                try {
+                    c.close();
+                } catch (SQLException e){
+
+                }
+            }
+        }
+
     }
 
     public User get(String id) throws SQLException {
@@ -59,33 +77,10 @@ public class UserDao {
 
     }
 
+    // 전략 패턴의 클라이언트(Client).
     public void deleteAll() throws SQLException{
-        Connection c = null;
-        PreparedStatement ps = null;
-        try {
-            c = dataSource.getConnection();
-            ps = c.prepareStatement("delete from users");
-            ps.executeUpdate();
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            if (ps != null){
-                try {
-                    ps.close();
-                }
-                catch (SQLException e){
-                }
-            }
-
-            if (c != null){
-                try {
-                    c.close();
-                } catch (SQLException e){
-
-                }
-            }
-        }
-
+        StatementStrategy st = new DeleteAllStatement(); // 전략 생성(DeleteAllStatement)
+        jdbcContextWithStatementStrategy(st); // 컨텍스트(jdbcContextWithStatementStrategy)에 전략 주입
     }
 
     public int getCount() throws SQLException{
@@ -119,6 +114,38 @@ public class UserDao {
             }
 
             if(c != null){
+                try {
+                    c.close();
+                } catch (SQLException e){
+
+                }
+            }
+        }
+    }
+
+    // 전략 패턴에서 컨텍스트(Context)
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException{
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = dataSource.getConnection();
+
+            ps = stmt.makePreparedStatement(c);
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null){
+                try {
+                    ps.close();
+                }
+                catch (SQLException e){
+                }
+            }
+
+            if (c != null){
                 try {
                     c.close();
                 } catch (SQLException e){
