@@ -65,10 +65,14 @@ public class UserDao {
 
     // 전략 패턴의 클라이언트(Client).
     public void deleteAll() throws SQLException{
+        this.jdbcContext.executeSql("delete from users");
+    }
+
+    private void executeSql(final String query) throws SQLException {
         this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
-                return c.prepareStatement("delete from users");
+                return c.prepareStatement(query);
             }
         });
     }
