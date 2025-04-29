@@ -2,6 +2,8 @@ package hello.springbook.user.dao;
 
 import hello.springbook.user.domain.User;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -11,16 +13,20 @@ public class UserDao {
     private DataSource dataSource;
 
     public void setDataSource(DataSource dataSource) {
-        this.jdbcContext = new JdbcContext();
-        this.jdbcContext.setDataSource(dataSource);
+
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
         this.dataSource = dataSource;
     }
 
-    private JdbcContext jdbcContext;
+    private JdbcTemplate jdbcTemplate;
 
     public void add(final User user) throws SQLException {
 
-        // 익명 내부 클래스를 적용.
+        // 스프링의 템플릿/콜백 기술.
+        this.jdbcTemplate.update("insert into users(id, name, password) values(?,?,?)",
+                user.getId(), user.getName(), user.getPassword());
+
+        /*// 익명 내부 클래스를 적용.
         this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
             public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
@@ -31,7 +37,7 @@ public class UserDao {
 
                 return ps;
             }
-        });
+        });*/
     }
 
     public User get(String id) throws SQLException {
@@ -63,11 +69,20 @@ public class UserDao {
 
     }
 
-    // 전략 패턴의 클라이언트(Client).
     public void deleteAll() throws SQLException{
-        this.jdbcContext.executeSql("delete from users");
+        /* JdbcTemplate의 템플릿 메소드를 사용해서 콜백 구현.
+        this.jdbcTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                return con.prepareStatement("delete from users");
+            }
+        });*/
+        // 내장 콜백을 사용해서 deleteAll 실행.
+        this.jdbcTemplate.update("delete from users");
     }
 
+    /*
+    jdbcContext에서 구현한 콜백.
     private void executeSql(final String query) throws SQLException {
         this.jdbcContext.workWithStatementStrategy(new StatementStrategy() {
             @Override
@@ -76,6 +91,7 @@ public class UserDao {
             }
         });
     }
+    */
 
     public int getCount() throws SQLException{
         Connection c = null;
