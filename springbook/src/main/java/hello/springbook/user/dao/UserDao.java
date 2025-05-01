@@ -31,22 +31,22 @@ public class UserDao {
         }
     };
 
-    public void add(final User user) throws SQLException {
+    public void add(final User user) {
         // 스프링의 템플릿/콜백 기술.
         this.jdbcTemplate.update("insert into users(id, name, password) values(?,?,?)",
                 user.getId(), user.getName(), user.getPassword());
     }
 
-    public User get(String id) throws SQLException {
+    public User get(String id) {
         return this.jdbcTemplate.queryForObject("select * from users where id = ?", new Object[]{id}, this.userMapper);
     }
 
-    public void deleteAll() throws SQLException{
+    public void deleteAll() {
         // 내장 콜백을 사용해서 deleteAll 실행.
         this.jdbcTemplate.update("delete from users");
     }
 
-    public int getCount() throws SQLException{
+    public int getCount() {
         // jdbcTemplate에서 queryForInt는 더이상 사용 X
         // 따라서 queryForObject에서 쿼리문, 타입을 매개변수로 줘서 대체함.
         return this.jdbcTemplate.queryForObject("select count(*) from users", Integer.class);
@@ -55,5 +55,5 @@ public class UserDao {
     public List<User> getAll(){
         return this.jdbcTemplate.query("select * from users order by id", this.userMapper);
     }
-    
+
 }
