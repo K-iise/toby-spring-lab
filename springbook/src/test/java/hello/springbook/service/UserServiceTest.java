@@ -4,6 +4,8 @@ import hello.springbook.user.dao.UserDao;
 import hello.springbook.user.domain.Level;
 import hello.springbook.user.domain.User;
 import hello.springbook.user.service.UserService;
+import hello.springbook.user.service.UserServiceImpl;
+import hello.springbook.user.service.UserServiceTx;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,15 +19,14 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-import static hello.springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
-import static hello.springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
+import static hello.springbook.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
+import static hello.springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(locations = "/test-applicationContext.xml")
@@ -35,8 +36,12 @@ public class UserServiceTest {
     MailSender mailSender;
     @Autowired
     PlatformTransactionManager transactionManager;
+
     @Autowired
     UserService userService;
+
+    @Autowired
+    UserServiceImpl userServiceImpl;
     @Autowired
     UserDao userDao;
 
@@ -58,7 +63,7 @@ public class UserServiceTest {
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
 
-        userService.upgradeLevels();
+        userServiceImpl.upgradeLevels();
 
         checkLevelUpgraded(users.get(0), false);
         checkLevelUpgraded(users.get(1), true);
@@ -75,8 +80,8 @@ public class UserServiceTest {
         User userWithoutLevel = users.get(0);
         userWithoutLevel.setLevel(null); // 레벨이 비어 있는 사용자. 로직에 따라 등록 중에 BASIC 레벨로 설정되어야 함.
 
-        userService.add(userWithLevel);
-        userService.add(userWithoutLevel);
+        userServiceImpl.add(userWithLevel);
+        userServiceImpl.add(userWithoutLevel);
 
         User userWithLevelRead = userDao.get(userWithLevel.getId());
         User userWithoutLevelRead = userDao.get(userWithoutLevel.getId());
@@ -88,15 +93,19 @@ public class UserServiceTest {
     @Test
     @DisplayName("예외 발생 시 작업 취소 여부 테스트")
     public void upgradeAllorNothing(){
-        UserService testUserService = new TestUserService(users.get(3).getId());
+        TestUserService testUserService = new TestUserService(users.get(3).getId());
         testUserService.setUserDao(this.userDao);
-        testUserService.setTransactionManager(this.transactionManager);
         testUserService.setMailSender(this.mailSender);
+
+        UserServiceTx txUserService = new UserServiceTx();
+        txUserService.setTransactionManager(this.transactionManager);
+        txUserService.setUserService(testUserService);
+
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
 
         try {
-            testUserService.upgradeLevels();
+            txUserService.upgradeLevels();
             fail("TestUserServiceException expected");
         } catch (Exception e){
 
@@ -113,9 +122,9 @@ public class UserServiceTest {
         for (User user : users) userDao.add(user);
 
         MockMailSender mockMailSender = new MockMailSender();
-        userService.setMailSender(mockMailSender);
+        userServiceImpl.setMailSender(mockMailSender);
 
-        userService.upgradeLevels();
+        userServiceImpl.upgradeLevels();
 
         checkLevelUpgraded(users.get(0), false);
         checkLevelUpgraded(users.get(1), true);
@@ -138,7 +147,7 @@ public class UserServiceTest {
         }
     }
 
-    static class TestUserService extends UserService {
+    static class TestUserService extends UserServiceImpl {
         private String id;
 
         private TestUserService(String id){
