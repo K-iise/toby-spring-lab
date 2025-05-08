@@ -3,17 +3,22 @@ package hello.springbook.user.service;
 import hello.springbook.user.dao.UserDao;
 import hello.springbook.user.domain.Level;
 import hello.springbook.user.domain.User;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.springframework.jdbc.datasource.DataSourceUtils;
+
+import org.springframework.mail.MailSender;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
-
+import java.util.Properties;
+import javax.mail.*;
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 
 public class UserService {
 
@@ -32,6 +37,11 @@ public class UserService {
         this.userDao = userDao;
     }
 
+    private MailSender mailSender;
+
+    public void setMailSender(MailSender mailSender) {
+        this.mailSender = mailSender;
+    }
 
     private boolean canUpgradeLevel(User user) {
         Level currentLevel = user.getLevel();
@@ -65,11 +75,23 @@ public class UserService {
     protected void upgradeLevel(User user){
         user.upgradeLevel();
         userDao.update(user);
+        sendUpgradeEmail(user);
     }
 
     public void add(User user){
         if (user.getLevel() == null) user.setLevel(Level.BASIC);
         userDao.add(user);
+    }
+
+    // 스프링의 MailSender을 이용한 메일 발송 메소드
+    private void sendUpgradeEmail(User user){
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(user.getEmail());
+        mailMessage.setFrom("useradmin@ksug.org");
+        mailMessage.setSubject("Upgrade 안내");
+        mailMessage.setText("사용자님의 등급이 " + user.getLevel().name());
+
+        mailSender.send(mailMessage);
     }
 
 
