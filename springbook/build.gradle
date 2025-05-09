@@ -26,6 +26,12 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'javax.mail:javax.mail-api:1.6.2'
 	implementation 'com.sun.mail:javax.mail:1.6.2'
+	testImplementation 'org.mockito:mockito-inline:5.6.0'
+}
+
+test {
+	jvmArgs '-Djdk.instrument.traceUsage=true'
+	jvmArgs '-XX:+EnableDynamicAgentLoading'
 }
 
 tasks.named('test') {
