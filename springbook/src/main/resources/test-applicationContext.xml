@@ -10,14 +10,23 @@
         <property name="password" value="1234"/>
     </bean>
 
-    <bean id="userService" class="hello.springbook.user.service.UserServiceTx">
+    <!-- 데코레이터 -->
+    <bean id="userService" class="hello.springbook.user.service.TxProxyFactoryBean">
+        <property name="target" ref="userServiceImpl"/>
         <property name="transactionManager" ref="transactionManager"/>
-        <property name="userService" ref="userServiceImpl"/>
+        <property name="pattern" value="upgradeLevels"/>
+        <property name="serviceInterface" value="hello.springbook.user.service.UserService"/>
     </bean>
 
+    <!-- 타깃 -->
     <bean id="userServiceImpl" class="hello.springbook.user.service.UserServiceImpl">
         <property name="userDao" ref="userDao"/>
         <property name="mailSender" ref="mailSender"/>
+    </bean>
+
+    <!-- 팩토리 빈 설정-->
+    <bean id="message" class="hello.springbook.learningtest.factorybean.MessageFactoryBean">
+        <property name="text" value="Factory Bean"/>
     </bean>
 
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">

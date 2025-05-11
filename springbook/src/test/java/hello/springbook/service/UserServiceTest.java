@@ -3,15 +3,14 @@ package hello.springbook.service;
 import hello.springbook.user.dao.UserDao;
 import hello.springbook.user.domain.Level;
 import hello.springbook.user.domain.User;
-import hello.springbook.user.service.UserService;
-import hello.springbook.user.service.UserServiceImpl;
-import hello.springbook.user.service.UserServiceTx;
+import hello.springbook.user.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -20,6 +19,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -34,13 +34,14 @@ import static hello.springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GO
 @ContextConfiguration(locations = "/test-applicationContext.xml")
 public class UserServiceTest {
 
+
+    @Autowired
+    ApplicationContext context;
+
     @Autowired
     MailSender mailSender;
     @Autowired
     PlatformTransactionManager transactionManager;
-
-    @Autowired
-    UserService userService;
 
     @Autowired
     UserServiceImpl userServiceImpl;
@@ -94,15 +95,18 @@ public class UserServiceTest {
     }
 
     @Test
+    @DirtiesContext
     @DisplayName("예외 발생 시 작업 취소 여부 테스트")
-    public void upgradeAllorNothing(){
+    public void upgradeAllorNothing() throws Exception {
         TestUserService testUserService = new TestUserService(users.get(3).getId());
         testUserService.setUserDao(this.userDao);
         testUserService.setMailSender(this.mailSender);
 
-        UserServiceTx txUserService = new UserServiceTx();
-        txUserService.setTransactionManager(this.transactionManager);
-        txUserService.setUserService(testUserService);
+        // 팩토리 빈 자체를 가져와야 하므로 빈 이름에 &를 반드시 넣어야 한다.
+        TxProxyFactoryBean txProxyFactoryBean =
+                context.getBean("&userService", TxProxyFactoryBean.class);
+        txProxyFactoryBean.setTarget(testUserService);
+        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
@@ -166,6 +170,35 @@ public class UserServiceTest {
         List<SimpleMailMessage> mailMessages = mailMessageArg.getAllValues();
         assertThat(mailMessages.get(0).getTo()[0]).isEqualTo(users.get(1).getEmail());
         assertThat(mailMessages.get(1).getTo()[0]).isEqualTo(users.get(3).getEmail());
+    }
+
+    @Test
+    @DisplayName("다이내믹 프록시를 이용한 트랜잭션 테스트")
+    public void upgradeAllorNothingProxy(){
+        TestUserService testUserService = new TestUserService(users.get(3).getId());
+        testUserService.setUserDao(this.userDao);
+        testUserService.setMailSender(this.mailSender);
+
+        TransactionHandler txHandler = new TransactionHandler();
+        txHandler.setTarget(testUserService);
+        txHandler.setTransactionManager(transactionManager);
+        txHandler.setPattern("upgradeLevels");
+
+        userDao.deleteAll();
+        for (User user : users) userDao.add(user);
+
+        UserService txUserService = (UserService) Proxy.newProxyInstance(
+                getClass().getClassLoader(), new Class[] {UserService.class}, txHandler
+        );
+
+        try {
+            txUserService.upgradeLevels();
+            fail("TestUserServiceException expected");
+        } catch (Exception e){
+
+        }
+
+        checkLevelUpgraded(users.get(1), false);
     }
 
     private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel){
