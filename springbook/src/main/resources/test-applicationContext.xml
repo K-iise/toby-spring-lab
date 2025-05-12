@@ -11,11 +11,13 @@
     </bean>
 
     <!-- 데코레이터 -->
-    <bean id="userService" class="hello.springbook.user.service.TxProxyFactoryBean">
+    <bean id="userService" class="org.springframework.aop.framework.ProxyFactoryBean">
         <property name="target" ref="userServiceImpl"/>
-        <property name="transactionManager" ref="transactionManager"/>
-        <property name="pattern" value="upgradeLevels"/>
-        <property name="serviceInterface" value="hello.springbook.user.service.UserService"/>
+        <property name="interceptorNames">
+            <list>
+                <value>transactionAdvisor</value>
+            </list>
+        </property>
     </bean>
 
     <!-- 타깃 -->
@@ -31,6 +33,22 @@
 
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 트랜잭션 어드바이스 빈 설정 -->
+    <bean id="transactionAdvice" class="hello.springbook.learningtest.jdk.proxy.TransactionAdvice">
+        <property name="transactionManager" ref="transactionManager"/>
+    </bean>
+
+    <!-- 포인트컷 빈 설정 -->
+    <bean id="transactionPointcut" class="org.springframework.aop.support.NameMatchMethodPointcut">
+        <property name="mappedName" value="upgrade*"/>
+    </bean>
+
+    <!-- 어드바이저 빈 설정 -->
+    <bean id="transactionAdvisor" class="org.springframework.aop.support.DefaultPointcutAdvisor">
+        <property name="advice" ref="transactionAdvice"/>
+        <property name="pointcut" ref="transactionPointcut"/>
     </bean>
 
     <bean id="mailSender" class="hello.springbook.user.service.DummyMailSender">

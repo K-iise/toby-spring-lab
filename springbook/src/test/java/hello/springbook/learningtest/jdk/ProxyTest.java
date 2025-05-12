@@ -1,8 +1,10 @@
 package hello.springbook.learningtest.jdk;
 
-import org.assertj.core.api.Assertions;
+import org.aopalliance.intercept.MethodInterceptor;
+import org.aopalliance.intercept.MethodInvocation;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.aop.framework.ProxyFactory;
 
 import java.lang.reflect.Proxy;
 
@@ -39,4 +41,5 @@ public class ProxyTest {
         assertThat(proxieHello.sayHi("Toby")).isEqualTo("HI TOBY");
         assertThat(proxieHello.sayThankYou("Toby")).isEqualTo("THANK YOU TOBY");
     }
+
 }
