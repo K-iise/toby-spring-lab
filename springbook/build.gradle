@@ -27,6 +27,7 @@ dependencies {
 	implementation 'javax.mail:javax.mail-api:1.6.2'
 	implementation 'com.sun.mail:javax.mail:1.6.2'
 	testImplementation 'org.mockito:mockito-inline:5.6.0'
+	implementation 'org.aspectj:aspectjweaver:1.9.21'
 }
 
 test {

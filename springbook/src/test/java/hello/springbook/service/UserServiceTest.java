@@ -45,7 +45,10 @@ public class UserServiceTest {
     PlatformTransactionManager transactionManager;
 
     @Autowired
-    UserServiceImpl userServiceImpl;
+    UserService userService;
+    @Autowired
+    UserService testUserService;
+
     @Autowired
     UserDao userDao;
 
@@ -68,7 +71,7 @@ public class UserServiceTest {
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
 
-        userServiceImpl.upgradeLevels();
+        userService.upgradeLevels();
 
         checkLevelUpgraded(users.get(0), false);
         checkLevelUpgraded(users.get(1), true);
@@ -85,8 +88,8 @@ public class UserServiceTest {
         User userWithoutLevel = users.get(0);
         userWithoutLevel.setLevel(null); // 레벨이 비어 있는 사용자. 로직에 따라 등록 중에 BASIC 레벨로 설정되어야 함.
 
-        userServiceImpl.add(userWithLevel);
-        userServiceImpl.add(userWithoutLevel);
+        userService.add(userWithLevel);
+        userService.add(userWithoutLevel);
 
         User userWithLevelRead = userDao.get(userWithLevel.getId());
         User userWithoutLevelRead = userDao.get(userWithoutLevel.getId());
@@ -99,21 +102,12 @@ public class UserServiceTest {
     @DirtiesContext
     @DisplayName("예외 발생 시 작업 취소 여부 테스트")
     public void upgradeAllorNothing() throws Exception {
-        TestUserService testUserService = new TestUserService(users.get(3).getId());
-        testUserService.setUserDao(this.userDao);
-        testUserService.setMailSender(this.mailSender);
-
-        // 팩토리 빈 자체를 가져와야 하므로 빈 이름에 &를 반드시 넣어야 한다.
-        ProxyFactoryBean txProxyFactoryBean =
-                context.getBean("&userService", ProxyFactoryBean.class);
-        txProxyFactoryBean.setTarget(testUserService);
-        UserService txUserService = (UserService) txProxyFactoryBean.getObject();
 
         userDao.deleteAll();
         for (User user : users) userDao.add(user);
 
         try {
-            txUserService.upgradeLevels();
+            this.testUserService.upgradeLevels();
             fail("TestUserServiceException expected");
         } catch (Exception e){
 
@@ -176,10 +170,6 @@ public class UserServiceTest {
     @Test
     @DisplayName("다이내믹 프록시를 이용한 트랜잭션 테스트")
     public void upgradeAllorNothingProxy(){
-        TestUserService testUserService = new TestUserService(users.get(3).getId());
-        testUserService.setUserDao(this.userDao);
-        testUserService.setMailSender(this.mailSender);
-
         TransactionHandler txHandler = new TransactionHandler();
         txHandler.setTarget(testUserService);
         txHandler.setTransactionManager(transactionManager);
@@ -217,11 +207,7 @@ public class UserServiceTest {
     }
 
     static class TestUserService extends UserServiceImpl {
-        private String id;
-
-        private TestUserService(String id){
-            this.id = id;
-        }
+        private String id = "madnite1";
 
         @Override
         protected void upgradeLevel(User user){
