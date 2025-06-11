@@ -18,9 +18,13 @@ import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
@@ -198,6 +202,34 @@ public class UserServiceTest {
     @DisplayName("읽기전용 속성 테스트")
     public void readOnlyTransactionAttribut() {
         org.junit.jupiter.api.Assertions.assertThrows(TransientDataAccessException.class, ()->testUserService.getAll());
+    }
+
+    @Test
+    @DisplayName("트랜잭션의 롤백 테스트")
+    public void transactionSync(){
+        DefaultTransactionDefinition txDefinition = new DefaultTransactionDefinition();
+        TransactionStatus txStatus = transactionManager.getTransaction(txDefinition);
+
+        try {
+            userService.deleteAll();
+            userService.add(users.get(0));
+            userService.add(users.get(1));
+        }
+        finally {
+            transactionManager.rollback(txStatus);
+        }
+
+        assertThat(userDao.getCount()).isEqualTo(0);
+    }
+
+    @Test
+    @Transactional // 기본적으로 트랜잭션을 강제로 롤백시키도록 설정되어 있다.
+    @Rollback(value = false)
+    @DisplayName("테스트에 적용된 @Transactional")
+    public void transactionSync2(){
+        userService.deleteAll();
+        userService.add(users.get(0));
+        userService.add(users.get(1));
     }
 
     private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel){
