@@ -39,6 +39,8 @@
         <aop:advisor advice-ref="transactionAdvice" pointcut="bean(*Service)"/>
     </aop:config>
 
+    <tx:annotation-driven/>
+
     <!-- tx 네임 스페이스를 적용한 tx 설정 빈-->
     <tx:advice id="transactionAdvice">
         <tx:attributes>
