@@ -4,6 +4,7 @@ import hello.springbook.user.dao.UserDao;
 import hello.springbook.user.domain.Level;
 import hello.springbook.user.domain.User;
 import hello.springbook.user.service.*;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.dao.TransientDataAccessException;
 import org.springframework.mail.MailException;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
@@ -191,6 +193,12 @@ public class UserServiceTest {
 
         checkLevelUpgraded(users.get(1), false);
     }
+    
+    @Test
+    @DisplayName("읽기전용 속성 테스트")
+    public void readOnlyTransactionAttribut() {
+        org.junit.jupiter.api.Assertions.assertThrows(TransientDataAccessException.class, ()->testUserService.getAll());
+    }
 
     private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel){
         assertThat(updated.getId()).isEqualTo(expectedId);
@@ -206,6 +214,7 @@ public class UserServiceTest {
         }
     }
 
+    // 읽기전용 메소드에 쓰기 작업을 추가한 테스트용 클래스.
     static class TestUserService extends UserServiceImpl {
         private String id = "madnite1";
 
@@ -213,6 +222,14 @@ public class UserServiceTest {
         protected void upgradeLevel(User user){
             if(user.getId().equals(this.id)) throw new TestUserServiceException();
             super.upgradeLevel(user);
+        }
+
+        @Override
+        public List<User> getAll() {
+            for (User user : super.getAll()){
+                super.update(user);
+            }
+            return null;
         }
     }
 
