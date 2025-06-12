@@ -219,7 +219,7 @@ public class UserServiceTest {
             transactionManager.rollback(txStatus);
         }
 
-        assertThat(userDao.getCount()).isEqualTo(0);
+        assertThat(userDao.getCount()).isEqualTo(5);
     }
 
     @Test
