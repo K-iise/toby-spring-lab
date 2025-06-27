@@ -72,8 +72,9 @@
         <property name="sqlService" ref="sqlService"/>
     </bean>
 
-    <bean id="sqlService" class="hello.springbook.user.sqlservice.DefaultSqlService">
-
+    <bean id="sqlService" class="hello.springbook.user.sqlservice.OxmSqlService">
+        <property name="unmarshaller" ref="unmarshaller"/>
+        <property name="sqlmap" value="/main-sqlmap.xml"/>
     </bean>
 
     <bean id="sqlReader" class="hello.springbook.user.sqlservice.JaxbXmlSqlReader">
@@ -81,6 +82,10 @@
     </bean>
 
     <bean id="sqlRegistry" class="hello.springbook.user.sqlservice.HashMapSqlRegistry">
+    </bean>
+
+    <bean id="unmarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
+        <property name="contextPath" value="hello.springbook.user.sqlservice.jaxb"/>
     </bean>
 
 </beans>

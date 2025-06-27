@@ -32,6 +32,10 @@ dependencies {
 
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:3.0.1'  // JAXB API
 	implementation 'org.glassfish.jaxb:jaxb-runtime:3.0.2'        // JAXB 구현체
+
+	implementation 'org.springframework:spring-oxm' // OXM 의존성 추가
+	implementation 'org.codehaus.castor:castor-xml:1.4.1' // Castor 의존성 추가
+
 }
 
 test {
