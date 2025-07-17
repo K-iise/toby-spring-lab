@@ -4,6 +4,7 @@
        xmlns:aop="http://www.springframework.org/schema/aop"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
        xsi:schemaLocation="
 		http://www.springframework.org/schema/beans
 		https://www.springframework.org/schema/beans/spring-beans.xsd
@@ -12,7 +13,9 @@
         http://www.springframework.org/schema/context
         http://www.springframework.org/schema/context/spring-context-3.0.xsd
         http://www.springframework.org/schema/tx
-        http://www.springframework.org/schema/tx/spring-tx-2.5.xsd">
+        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+        http://www.springframework.org/schema/jdbc
+        http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
 
     <!-- @Transaction이 붙은 타입과 메소드에 트랜잭션 부가기능을 담은 프록시를 추가하도록 만들어주는 후처리기 등록 -->
     <tx:annotation-driven/>
@@ -34,7 +37,7 @@
     </bean>
 
     <!-- 팩토리 빈 설정-->
-    <bean id="message" class="hello.springbook.learningtest.factorybean.MessageFactoryBean">
+    <bean id="message" class="hello.springbook.user.learningtest.factorybean.MessageFactoryBean">
         <property name="text" value="Factory Bean"/>
     </bean>
 
@@ -61,7 +64,7 @@
     <bean class="org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator"/>
 
     <!-- 테스트용 UserService의 등록 -->
-    <bean id="testUserService" class="hello.springbook.service.UserServiceTest$TestUserService"
+    <bean id="testUserService" class="hello.springbook.user.service.UserServiceTest$TestUserService"
           parent="userService"/>
 
     <bean id="mailSender" class="hello.springbook.user.service.DummyMailSender">
@@ -75,17 +78,23 @@
     <bean id="sqlService" class="hello.springbook.user.sqlservice.OxmSqlService">
         <property name="unmarshaller" ref="unmarshaller"/>
         <property name="sqlmap" value="/main-sqlmap.xml"/>
+        <property name="sqlRegistry" ref="sqlRegistry"/>
+    </bean>
+
+    <bean id="sqlRegistry" class="hello.springbook.user.sqlservice.updatable.EmbeddedDbSqlRegistry">
+        <property name="dataSource" ref="embeddedDatabase"/>
     </bean>
 
     <bean id="sqlReader" class="hello.springbook.user.sqlservice.JaxbXmlSqlReader">
         <property name="sqlmapFile" value="/main-sqlmap.xml"/>
     </bean>
 
-    <bean id="sqlRegistry" class="hello.springbook.user.sqlservice.HashMapSqlRegistry">
-    </bean>
-
     <bean id="unmarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
         <property name="contextPath" value="hello.springbook.user.sqlservice.jaxb"/>
     </bean>
 
+    <!-- 내장형 DB 등록 -->
+    <jdbc:embedded-database id="embeddedDatabase">
+        <jdbc:script location="classpath:sqlRegistrySchema.sql"/>
+    </jdbc:embedded-database>
 </beans>

@@ -5,7 +5,7 @@
 		http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <!-- 팩토리 빈 설정-->
-    <bean id="message" class="hello.springbook.learningtest.factorybean.MessageFactoryBean">
+    <bean id="message" class="hello.springbook.user.learningtest.factorybean.MessageFactoryBean">
         <property name="text" value="Factory Bean"/>
     </bean>
 

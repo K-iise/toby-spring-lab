@@ -1,6 +1,6 @@
 package hello.springbook.user.sqlservice.exception;
 
-public class SqlUpdateFailureException extends Exception {
+public class SqlUpdateFailureException extends RuntimeException {
 
     public SqlUpdateFailureException(String message){
         super(message);

@@ -35,6 +35,8 @@ dependencies {
 
 	implementation 'org.springframework:spring-oxm' // OXM 의존성 추가
 	implementation 'org.codehaus.castor:castor-xml:1.4.1' // Castor 의존성 추가
+	testImplementation 'org.hsqldb:hsqldb:2.7.2'
+
 
 }
 

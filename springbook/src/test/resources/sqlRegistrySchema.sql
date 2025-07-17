@@ -1,0 +1,14 @@
+CREATE TABLE SQLMAP (
+    KEY_ VARCHAR(100) PRIMARY KEY,
+    SQL_ VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE users (
+    id VARCHAR(40) PRIMARY KEY,
+    name VARCHAR(20) NOT NULL,
+    password VARCHAR(20) NOT NULL,
+    level INT NOT NULL,
+    login INT NOT NULL,
+    recommend INT NOT NULL,
+    email VARCHAR(55) NOT NULL
+);
